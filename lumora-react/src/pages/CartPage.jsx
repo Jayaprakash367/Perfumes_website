@@ -9,7 +9,10 @@ import {
   Tag, 
   ArrowLeft,
   Sparkles,
-  CheckCircle
+  CheckCircle2,
+  Lock,
+  Gift,
+  Check
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { products } from '../data/products';
@@ -39,35 +42,38 @@ export default function CartPage() {
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
-    if (!couponInput) return;
-    applyPromo(couponInput);
+    if (!couponInput.trim()) return;
+    applyPromo(couponInput.trim());
     setCouponInput('');
   };
 
-  const recommendations = products.slice(10, 14);
+  const recommendations = products.slice(0, 4);
 
   if (items.length === 0) {
     return (
       <div className="cart-empty-page">
         <div className="empty-cart-card">
           <div className="cart-icon-halo">
-            <ShoppingBag size={48} />
+            <ShoppingBag size={44} />
           </div>
           <h2>Your Luxury Cart is Empty</h2>
           <p>
-            You have not added any perfumes to your personal flacon collection yet.
-            Immerse yourself in our 65 master-crafted fragrances.
+            You have not added any fragrances to your personal flacon collection yet.
+            Immerse yourself in our master-crafted haute parfumerie collection.
           </p>
           <Link to="/products" className="btn-browse-fragrances">
-            <span>Explore Fragrance Catalog</span>
+            <span>Explore Fragrance Vault</span>
             <ArrowRight size={18} />
           </Link>
         </div>
 
-        {/* Similar Recommendations */}
+        {/* Curated Recommendations for Empty State */}
         <div className="cart-recommendations-wrapper">
-          <h3 className="rec-heading">Curated Connoisseur Favorites</h3>
-          <div className="products-grid">
+          <div className="rec-header-row">
+            <h3 className="rec-heading">Curated Connoisseur Selections</h3>
+            <p className="rec-subtitle">Iconic flacons loved by private patrons worldwide</p>
+          </div>
+          <div className="cart-products-recommendation-grid">
             {recommendations.map((p) => (
               <ProductCard
                 key={p.id}
@@ -90,12 +96,30 @@ export default function CartPage() {
 
   return (
     <div className="cart-page">
-      {/* Header */}
+      {/* Checkout Progress Stepper Indicator */}
+      <div className="cart-stepper-header">
+        <div className="step-crumb active">
+          <span className="step-num">1</span>
+          <span className="step-label">Flacon Selection</span>
+        </div>
+        <div className="step-divider active"></div>
+        <div className="step-crumb">
+          <span className="step-num">2</span>
+          <span className="step-label">Atelier Delivery</span>
+        </div>
+        <div className="step-divider"></div>
+        <div className="step-crumb">
+          <span className="step-num">3</span>
+          <span className="step-label">Secure Payment</span>
+        </div>
+      </div>
+
+      {/* Header Row */}
       <div className="cart-header-row">
         <div>
           <h1 className="cart-page-title">Your Luxury Flacons</h1>
           <p className="cart-page-subtitle">
-            Review your chosen fragrances before complimentary express dispatch.
+            {items.reduce((sum, item) => sum + item.quantity, 0)} {items.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'flacon' : 'flacons'} prepared for complimentary atelier dispatch.
           </p>
         </div>
         <Link to="/products" className="btn-continue-shopping">
@@ -103,18 +127,18 @@ export default function CartPage() {
         </Link>
       </div>
 
-      {/* Free Shipping Progress Bar */}
+      {/* Free Express Shipping Meter */}
       <div className="free-shipping-card">
         <div className="shipping-bar-header">
           <div className="shipping-text">
             <Truck size={20} className="truck-icon" />
             {isFreeShipping ? (
               <span className="unlocked-text">
-                <CheckCircle size={16} className="inline-check" /> <strong>Congratulations!</strong> You have unlocked Complimentary Express Shipping.
+                <CheckCircle2 size={17} className="inline-check" /> <strong>Congratulations!</strong> You have unlocked Complimentary Express Air Delivery.
               </span>
             ) : (
               <span>
-                Add <strong>₹{freeShippingRemaining}</strong> more of fine fragrances to unlock <strong>Complimentary Worldwide Express Delivery</strong>.
+                Add <strong>₹{freeShippingRemaining.toLocaleString()}</strong> more to unlock <strong>Complimentary Express Air Delivery</strong>.
               </span>
             )}
           </div>
@@ -128,19 +152,20 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* Main Two-Column Cart Layout */}
+      {/* Main Two-Column Cart Grid */}
       <div className="cart-grid-layout">
-        {/* Left Column: Items List */}
+        {/* Left Column: Cart Items List */}
         <div className="cart-items-column">
           <div className="items-table-header">
-            <span>Fragrance Description</span>
+            <span>Flacon Selection</span>
             <span className="text-center">Quantity</span>
-            <span className="text-right">Total Price</span>
+            <span className="text-right">Investment</span>
           </div>
 
           <div className="items-list">
             {items.map((item) => (
               <div key={`${item.id}-${item.volume}`} className="cart-item-row">
+                {/* Item Details */}
                 <div className="item-details-block">
                   <Link to={`/product/${item.id}`} className="item-thumbnail-link">
                     <img src={item.image} alt={item.name} className="item-thumbnail" />
@@ -152,7 +177,7 @@ export default function CartPage() {
                     </h3>
                     <div className="item-specs">
                       <span className="item-volume-badge">{item.volume} Extrait</span>
-                      <span className="item-unit-price">₹{item.price} each</span>
+                      <span className="item-unit-price">₹{item.price.toLocaleString()} each</span>
                     </div>
                   </div>
                 </div>
@@ -165,7 +190,7 @@ export default function CartPage() {
                       onClick={() => updateQuantity(item.id, item.volume, item.quantity - 1)}
                       aria-label="Decrease quantity"
                     >
-                      -
+                      −
                     </button>
                     <span>{item.quantity}</span>
                     <button
@@ -178,9 +203,9 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Subtotal and Delete */}
+                {/* Subtotal & Delete */}
                 <div className="item-pricing-block">
-                  <span className="item-line-total">₹{item.price * item.quantity}</span>
+                  <span className="item-line-total">₹{(item.price * item.quantity).toLocaleString()}</span>
                   <button
                     type="button"
                     className="item-remove-btn"
@@ -195,103 +220,145 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Complimentary Discovery Notice */}
+          {/* Complimentary Discovery & Packaging Assurance */}
           <div className="complimentary-discovery-banner">
-            <Sparkles size={20} className="sparkle-icon" />
-            <div>
-              <h4>Complimentary 2ml Extrait Vial Included</h4>
-              <p>Every ordered flacon includes a complimentary sealed trial sample to test on your pulse points prior to opening the master bottle.</p>
+            <div className="discovery-icon-halo">
+              <Gift size={22} className="sparkle-icon" />
+            </div>
+            <div className="discovery-text">
+              <h4>Complimentary 2ml Extrait Vial & Bespoke Presentation</h4>
+              <p>
+                Each ordered flacon includes a complimentary sealed 2ml discovery vial to test on pulse points prior to opening the master bottle, plus signature satin ribbons and wax seal.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Order Summary & Checkout */}
+        {/* Right Column: Order Summary & Checkout Action */}
         <div className="cart-summary-column">
           <div className="order-summary-card">
             <h3 className="summary-title">Order Summary</h3>
 
-            {/* Promo Code Form */}
+            {/* Privilege Code Section */}
             <div className="promo-code-section">
               {appliedPromo ? (
                 <div className="applied-promo-tag">
                   <div className="promo-info">
                     <Tag size={16} />
-                    <span><strong>{appliedPromo.code}</strong> ({appliedPromo.discountPercent}% Off)</span>
+                    <span><strong>{appliedPromo.code}</strong> ({appliedPromo.discountPercent}% Off Applied)</span>
                   </div>
-                  <button type="button" onClick={removePromo} className="remove-promo-btn">
+                  <button type="button" onClick={removePromo} className="btn-remove-promo">
                     Remove
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleApplyCoupon} className="coupon-form">
-                  <input
-                    type="text"
-                    placeholder="Privilege Code (e.g. LUMORA10)"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    className="coupon-input"
-                  />
-                  <button type="submit" className="coupon-apply-btn">
-                    Apply
-                  </button>
-                </form>
+                <>
+                  <form onSubmit={handleApplyCoupon} className="promo-input-form">
+                    <div className="promo-input-wrap">
+                      <Tag size={15} className="promo-tag-icon" />
+                      <input
+                        type="text"
+                        placeholder="Privilege Code (e.g. LUMORA10)"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        className="promo-input"
+                      />
+                    </div>
+                    <button type="submit" className="btn-apply-promo">
+                      Apply
+                    </button>
+                  </form>
+                  <div className="promo-hints">
+                    <span>Try code:</span>
+                    <button 
+                      type="button" 
+                      className="promo-chip"
+                      onClick={() => applyPromo('LUMORA10')}
+                    >
+                      LUMORA10 (10% OFF)
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 
             {/* Price Calculations */}
-            <div className="summary-calculations">
-              <div className="calc-row">
+            <div className="summary-cost-rows">
+              <div className="summary-row">
                 <span>Subtotal</span>
-                <span>₹{subtotal}</span>
+                <span>₹{subtotal.toLocaleString()}</span>
               </div>
 
               {discount > 0 && (
-                <div className="calc-row discount-row">
+                <div className="summary-row">
                   <span>Privilege Discount ({appliedPromo?.code})</span>
-                  <span>-₹{discount}</span>
+                  <span className="discount-text">−₹{discount.toLocaleString()}</span>
                 </div>
               )}
 
-              <div className="calc-row">
+              <div className="summary-row">
                 <span>Express Worldwide Shipping</span>
-                <span>{shipping === 0 ? <strong className="text-free">FREE</strong> : `₹${shipping}`}</span>
+                <span>
+                  {shipping === 0 ? (
+                    <span className="free-shipping-badge">FREE</span>
+                  ) : (
+                    `₹${shipping.toLocaleString()}`
+                  )}
+                </span>
               </div>
 
-              <div className="calc-row">
-                <span>Estimated Taxes</span>
+              <div className="summary-row">
+                <span>Estimated Taxes & Duties</span>
                 <span className="text-inclusive">Included in Price</span>
               </div>
 
               <hr className="summary-divider" />
 
-              <div className="calc-row grand-total-row">
+              <div className="summary-total-row">
                 <span>Grand Total</span>
-                <span className="grand-total-amount">₹{grandTotal}</span>
+                <span className="total-gold-price">₹{grandTotal.toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Proceed to Checkout CTA */}
+            {/* Proceed to Checkout Button */}
             <button
               type="button"
-              className="btn-proceed-checkout"
+              className="btn-checkout-primary"
               onClick={() => navigate('/checkout')}
             >
-              <span>Proceed to Checkout</span>
+              <span>Proceed to Secure Checkout</span>
               <ArrowRight size={18} />
             </button>
 
-            <div className="security-badges-block">
-              <ShieldCheck size={18} />
-              <span>Encrypted 256-Bit Bank-Grade Checkout</span>
+            {/* Trust Assurance Strip */}
+            <div className="cart-security-badges">
+              <div className="security-point">
+                <Lock size={15} className="sec-icon" />
+                <span>256-Bit Bank-Grade SSL Encryption</span>
+              </div>
+              <div className="security-point">
+                <ShieldCheck size={15} className="sec-icon" />
+                <span>30-Day Privilege Return Guarantee</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recommended Fragrances Slider */}
+      {/* Recommended Fragrances Section */}
       <section className="cart-recommendations-section">
-        <h3 className="section-title-alt">Connoisseurs Also Collected</h3>
-        <div className="products-grid">
+        <div className="rec-section-header">
+          <div>
+            <h3 className="rec-section-title">Connoisseurs Also Collected</h3>
+            <p className="rec-section-subtitle">Complementary olfactory accords curated by our master perfumers</p>
+          </div>
+          <Link to="/products" className="rec-see-all-link">
+            <u>Explore All 65</u> &rarr;
+          </Link>
+        </div>
+
+        {/* 4-Column Responsive Grid */}
+        <div className="cart-products-recommendation-grid">
           {recommendations.map((prod) => (
             <ProductCard
               key={prod.id}

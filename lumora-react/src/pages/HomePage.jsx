@@ -40,11 +40,17 @@ export default function HomePage() {
   // Hero Slider State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-  // Auto-advance hero slider
+  // Auto-advance hero slider & preload all slides in background for zero lag
   useEffect(() => {
+    // Background preload
+    heroSlides.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+
     const timer = setInterval(() => {
       setCurrentSlideIndex((prev) => (prev + 1) % heroSlides.length);
-    }, 3500);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -107,6 +113,9 @@ export default function HomePage() {
               src={slide}
               className={`slider-img ${index === currentSlideIndex ? 'active' : ''}`}
               alt={`LUMORA Scent Slide ${index + 1}`}
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "auto"}
+              decoding="async"
             />
           ))}
         </div>

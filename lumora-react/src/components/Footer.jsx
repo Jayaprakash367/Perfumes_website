@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowRight, ShieldCheck, Truck, RefreshCw, Award, Heart } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Truck, RefreshCw, Award } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 export default function Footer() {
@@ -59,10 +59,10 @@ export default function Footer() {
         {/* Col 1: Brand & Atelier */}
         <div className="footer-col brand-col">
           <div className="footer-brand-header">
-            <img 
-              src="https://cdn-icons-gif.flaticon.com/19001/19001681.gif" 
-              alt="LUMORA" 
-              className="footer-brand-icon" 
+            <img
+              src="https://cdn-icons-gif.flaticon.com/19001/19001681.gif"
+              alt="LUMORA"
+              className="footer-brand-icon"
             />
             <span className="footer-brand-title">LUMORA</span>
           </div>

@@ -138,13 +138,13 @@ export default function DetailPage() {
       {/* 2. Iconic Airbnb 5-Photo Collage Showcase */}
       <div className="airbnb-photo-collage" onClick={() => setLightboxOpen(true)}>
         <div className="collage-main-photo">
-          <img src={relatedImages[0]} alt={product.name} />
+          <img src={relatedImages[0]} alt={product.name} loading="eager" fetchPriority="high" decoding="async" />
         </div>
         <div className="collage-side-grid">
-          <div className="side-photo"><img src={relatedImages[1]} alt="Atelier distillation" /></div>
-          <div className="side-photo"><img src={relatedImages[2]} alt="Botanical extracts" /></div>
-          <div className="side-photo"><img src={relatedImages[3]} alt="Luxury presentation" /></div>
-          <div className="side-photo"><img src={relatedImages[4]} alt="Scent notes" /></div>
+          <div className="side-photo"><img src={relatedImages[1]} alt="Atelier distillation" loading="lazy" decoding="async" /></div>
+          <div className="side-photo"><img src={relatedImages[2]} alt="Botanical extracts" loading="lazy" decoding="async" /></div>
+          <div className="side-photo"><img src={relatedImages[3]} alt="Luxury presentation" loading="lazy" decoding="async" /></div>
+          <div className="side-photo"><img src={relatedImages[4]} alt="Scent notes" loading="lazy" decoding="async" /></div>
         </div>
         <button
           type="button"

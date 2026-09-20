@@ -28,16 +28,24 @@ export default function ProductCard({ product, onQuickView }) {
     addToCart(product, 1, '100 ML');
   };
 
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+
   return (
     <div className="airbnb-listing-card">
-      {/* Photo Container */}
-      <div className="listing-photo-box">
+      {/* Photo Container with Shimmer Skeleton */}
+      <div className={`listing-photo-box ${!imageLoaded ? 'is-loading-skeleton' : ''}`}>
         <Link to={`/product/${product.id}`} className="listing-photo-link">
           <img
             src={product.image}
             alt={product.name}
-            className="listing-image"
+            className={`listing-image ${imageLoaded ? 'img-fade-in' : 'img-pre-load'}`}
             loading="lazy"
+            decoding="async"
+            onLoad={() => setImageLoaded(true)}
+            onError={(e) => {
+              e.currentTarget.src = '/1.jpg';
+              setImageLoaded(true);
+            }}
           />
         </Link>
 
