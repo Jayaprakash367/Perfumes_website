@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Sparkles, 
-  ArrowRight, 
-  ShieldCheck, 
-  Truck, 
-  RefreshCw, 
-  Award, 
-  Star, 
-  CheckCircle, 
+import {
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  RefreshCw,
+  Award,
+  Star,
+  CheckCircle,
   Filter,
   ChevronLeft,
   ChevronRight,
@@ -104,7 +104,7 @@ export default function HomePage() {
 
   return (
     <div className="airbnb-home-page">
-      {/* 1. Full-Bleed Header Slider (Exact design format from user screenshot) */}
+      {/* 1. Full-Bleed Header Slider Filling Correctly with Box Design at Bottom */}
       <div className="header-slider">
         <div className="slider-images">
           {heroSlides.map((slide, index) => (
@@ -118,18 +118,35 @@ export default function HomePage() {
               decoding="async"
             />
           ))}
+          <div className="slider-bottom-vignette"></div>
         </div>
 
-        <div className="slider-caption">
-          <h1 className="candal-regular"><i>The Art of Scent</i></h1>
-          <p><i>Perfume is the art that makes memory speak.</i></p>
-          <button
-            type="button"
-            className="header-button"
-            onClick={() => navigate('/products')}
-          >
-            EXPLORE NOW
-          </button>
+        {/* Content Box Centered in Image */}
+        <div className="slider-bottom-box">
+          <div className="slider-box-card">
+            <h1 className="slider-box-title"><i>The Art of Scent</i></h1>
+            <p className="slider-box-desc"><i>Perfume is the art that makes memory speak.</i></p>
+            <button
+              type="button"
+              className="header-button"
+              onClick={() => navigate('/products')}
+            >
+              EXPLORE NOW
+            </button>
+          </div>
+        </div>
+
+        {/* Slide Indicator Dots at Bottom */}
+        <div className="header-slider-dots">
+          {heroSlides.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className={`header-slider-dot ${idx === currentSlideIndex ? 'active' : ''}`}
+              onClick={() => setCurrentSlideIndex(idx)}
+              aria-label={`Slide ${idx + 1}`}
+            />
+          ))}
         </div>
 
         {/* Navigation Arrows */}
@@ -149,19 +166,6 @@ export default function HomePage() {
         >
           <ChevronRight size={22} />
         </button>
-
-        {/* Slide Indicator Dots */}
-        <div className="header-slider-dots">
-          {heroSlides.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className={`header-slider-dot ${idx === currentSlideIndex ? 'active' : ''}`}
-              onClick={() => setCurrentSlideIndex(idx)}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
-        </div>
       </div>
 
       {/* 2. Airbnb Category Icons Bar Strip (Fixed subheader just like Airbnb) */}
@@ -242,9 +246,9 @@ export default function HomePage() {
           </div>
 
           <div className="atelier-photo-col">
-            <img 
-              src="/laura-chouette-4sKdeIMiFEI-unsplash.jpg" 
-              alt="LUMORA Atelier Craft" 
+            <img
+              src="/laura-chouette-4sKdeIMiFEI-unsplash.jpg"
+              alt="LUMORA Atelier Craft"
               className="atelier-featured-photo"
             />
           </div>

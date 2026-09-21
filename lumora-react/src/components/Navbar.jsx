@@ -72,7 +72,7 @@ export default function Navbar() {
       <header className={`airbnb-navbar ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="airbnb-nav-container">
           {/* Left: Brand Logo */}
-          <Link to="/" className="airbnb-brand-block">
+          <Link to="/" className="airbnb-brand-block" aria-label="LUMORA Haute Parfumerie">
             <span className="airbnb-logo-icon">
               <img 
                 src="https://cdn-icons-gif.flaticon.com/19001/19001681.gif" 
@@ -80,7 +80,7 @@ export default function Navbar() {
                 className="logo-gif" 
               />
             </span>
-            <span className="airbnb-brand-text">lumora</span>
+            <span className="airbnb-brand-text">LUMORA</span>
           </Link>
 
           {/* Center: Iconic Airbnb Search Capsule Bar */}
@@ -109,6 +109,17 @@ export default function Navbar() {
 
           {/* Right: Actions & User Pill Menu */}
           <div className="airbnb-nav-actions">
+            {/* Mobile Search Button */}
+            <button
+              type="button"
+              className="airbnb-mobile-search-btn"
+              onClick={() => setSearchModalOpen(true)}
+              aria-label="Search perfumes"
+              title="Search perfumes"
+            >
+              <Search size={18} />
+            </button>
+
             <Link to="/products" className="airbnb-curator-link">
               Explore 65 Scents
             </Link>
