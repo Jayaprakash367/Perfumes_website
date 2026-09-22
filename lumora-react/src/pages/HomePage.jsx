@@ -215,72 +215,8 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* 4. Airbnb Host / Atelier Heritage Section */}
-      <section className="airbnb-atelier-feature" id="story">
-        <div className="atelier-inner-box">
-          <div className="atelier-content-col">
-            <span className="eyebrow-airbnb">Master Perfumer Craftsmanship</span>
-            <h2 className="atelier-title-airbnb">Distilled without compromise</h2>
-            <p>
-              In our Grasse atelier, master perfumers spend months perfecting each formula. We harvest Damask roses at dawn, age resins in French oak, and bottle in heavy crystalline flacons with magnetic seals.
-            </p>
 
-            <div className="atelier-stats-grid">
-              <div className="stat-card-airbnb">
-                <span className="stat-big-num">65</span>
-                <span className="stat-caption">Bespoke formulations</span>
-              </div>
-              <div className="stat-card-airbnb">
-                <span className="stat-big-num">100%</span>
-                <span className="stat-caption">Natural essential extracts</span>
-              </div>
-              <div className="stat-card-airbnb">
-                <span className="stat-big-num">12+ Hr</span>
-                <span className="stat-caption">Documented skin longevity</span>
-              </div>
-            </div>
 
-            <Link to="/products" className="btn-visit-atelier">
-              Explore The Complete Harvest &rarr;
-            </Link>
-          </div>
-
-          <div className="atelier-photo-col">
-            <img
-              src="/laura-chouette-4sKdeIMiFEI-unsplash.jpg"
-              alt="LUMORA Atelier Craft"
-              className="atelier-featured-photo"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Trust Pillars Bar */}
-      <section className="airbnb-trust-pillars">
-        <div className="trust-pillar-item">
-          <ShieldCheck size={26} className="pillar-icon-airbnb" />
-          <div>
-            <h4>100% Authentic Guarantee</h4>
-            <p>Direct from our certified Parisian and Grasse ateliers.</p>
-          </div>
-        </div>
-
-        <div className="trust-pillar-item">
-          <Truck size={26} className="pillar-icon-airbnb" />
-          <div>
-            <h4>Express Worldwide Delivery</h4>
-            <p>Complimentary insured delivery on orders over ₹3,000.</p>
-          </div>
-        </div>
-
-        <div className="trust-pillar-item">
-          <RefreshCw size={26} className="pillar-icon-airbnb" />
-          <div>
-            <h4>30-Day Flacon Returns</h4>
-            <p>Complimentary 2ml sample vial included with every flacon.</p>
-          </div>
-        </div>
-      </section>
 
       {/* Filter Modal */}
       <FilterModal
