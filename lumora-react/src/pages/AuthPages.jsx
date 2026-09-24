@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, User, Phone, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Phone, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -9,79 +9,95 @@ export function LoginPage() {
   const { login } = useAuth();
   const { addToast } = useToast();
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username || !password) {
-      addToast('Please enter both username and password', 'warning');
+    setErrorMsg('');
+    if (!email || !password) {
+      addToast('Please enter both email and password', 'warning');
       return;
     }
 
     setLoading(true);
-    setTimeout(() => {
-      login(username, password);
+    try {
+      const profile = await login(email, password);
       setLoading(false);
-      navigate('/profile');
-    }, 900);
+      if (profile?.role === 'ADMIN' || profile?.role === 'MANAGER') {
+        navigate('/admin');
+      } else {
+        navigate('/profile');
+      }
+    } catch (err) {
+      setLoading(false);
+      setErrorMsg(err.message || 'Incorrect email or password. Please try again.');
+    }
   };
 
   return (
     <div className="auth-page-wrapper">
       <div className="auth-card">
         <div className="auth-brand-header">
-          <img
-            src="https://cdn-icons-gif.flaticon.com/19001/19001681.gif"
-            alt="LUMORA"
-            className="auth-flacon-icon"
-          />
-          <h1 className="auth-brand-title">LUMORA</h1>
-          <p className="auth-brand-subtitle">Haute Parfumerie Sanctuary</p>
+          <Link to="/" className="auth-brand-logo-link">
+            <h1 className="auth-brand-title">LUMORA</h1>
+          </Link>
+          <p className="auth-brand-subtitle">Haute Parfumerie Paris</p>
         </div>
 
-        <h2 className="auth-page-title">Welcome Back</h2>
-        <p className="auth-page-caption">Sign in to access your bespoke flacon collection and privileges.</p>
+        <h2 className="auth-page-title">Sign In</h2>
+        <p className="auth-page-caption">Access your order history and fragrance selections.</p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {errorMsg && (
+          <div className="auth-error-banner" role="alert">
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           <div className="auth-input-group">
-            <label>Username or Email</label>
+            <label htmlFor="login-email">Email Address</label>
             <div className="input-with-icon">
-              <User size={18} className="field-icon" />
+              <Mail size={17} className="field-icon" />
               <input
-                type="text"
-                placeholder="Enter username or email"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="login-email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
               />
             </div>
           </div>
 
           <div className="auth-input-group">
             <div className="label-with-link">
-              <label>Password</label>
+              <label htmlFor="login-password">Password</label>
               <a 
                 href="#forgot" 
                 onClick={(e) => { 
                   e.preventDefault(); 
-                  addToast('Password reset link sent to your registered email.', 'info'); 
+                  addToast('If this email is registered, password reset instructions have been sent.', 'info'); 
                 }}
                 className="forgot-link"
               >
-                Forgot Password?
+                Forgot password?
               </a>
             </div>
             <div className="input-with-icon">
-              <Lock size={18} className="field-icon" />
+              <Lock size={17} className="field-icon" />
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
               />
               <button
                 type="button"
@@ -89,45 +105,18 @@ export function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
           </div>
 
           <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? 'Authenticating...' : 'Sign In to Atelier'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="auth-divider">
-          <span>Or sign in with</span>
-        </div>
-
-        <div className="auth-social-row">
-          <button
-            type="button"
-            className="social-auth-btn"
-            onClick={() => {
-              login('GoogleUser');
-              navigate('/profile');
-            }}
-          >
-            <i className="fa-brands fa-google"></i> Google
-          </button>
-          <button
-            type="button"
-            className="social-auth-btn"
-            onClick={() => {
-              login('AppleUser');
-              navigate('/profile');
-            }}
-          >
-            <i className="fa-brands fa-apple"></i> Apple
-          </button>
-        </div>
-
         <p className="auth-footer-link">
-          New to House LUMORA? <Link to="/signup">Create an Account</Link>
+          Don't have an account? <Link to="/signup">Create an Account</Link>
         </p>
       </div>
     </div>
@@ -141,123 +130,126 @@ export function SignUpPage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    username: '',
     email: '',
     phone: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.email || !formData.password || !formData.username) {
+    setErrorMsg('');
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
       addToast('Please fill in all required fields', 'warning');
       return;
     }
 
+    if (formData.password.length < 6) {
+      addToast('Password must be at least 6 characters', 'warning');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      signup(formData);
+    try {
+      await signup(formData);
       setLoading(false);
       navigate('/profile');
-    }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setErrorMsg(err.message || 'Registration could not be completed. Please check your details.');
+    }
   };
 
   return (
     <div className="auth-page-wrapper">
       <div className="auth-card">
         <div className="auth-brand-header">
-          <img
-            src="https://cdn-icons-gif.flaticon.com/19001/19001681.gif"
-            alt="LUMORA"
-            className="auth-flacon-icon"
-          />
-          <h1 className="auth-brand-title">LUMORA</h1>
-          <p className="auth-brand-subtitle">Haute Parfumerie Sanctuary</p>
+          <Link to="/" className="auth-brand-logo-link">
+            <h1 className="auth-brand-title">LUMORA</h1>
+          </Link>
+          <p className="auth-brand-subtitle">Haute Parfumerie Paris</p>
         </div>
 
-        <h2 className="auth-page-title">Create Your Account</h2>
-        <p className="auth-page-caption">
-          Join our intimate circle of fragrance collectors and receive exclusive harvest previews.
-        </p>
+        <h2 className="auth-page-title">Create Account</h2>
+        <p className="auth-page-caption">Register to save delivery addresses and manage orders.</p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {errorMsg && (
+          <div className="auth-error-banner" role="alert">
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           <div className="auth-input-group">
-            <label>Full Name</label>
+            <label htmlFor="register-name">Full Name</label>
             <div className="input-with-icon">
-              <User size={18} className="field-icon" />
+              <User size={17} className="field-icon" />
               <input
+                id="register-name"
                 type="text"
                 name="name"
-                placeholder="Monsieur Alexandre"
+                placeholder="e.g. Alexandre Dubois"
                 value={formData.name}
                 onChange={handleChange}
                 required
+                autoComplete="name"
               />
             </div>
           </div>
 
           <div className="auth-input-group">
-            <label>Username</label>
+            <label htmlFor="register-email">Email Address</label>
             <div className="input-with-icon">
-              <User size={18} className="field-icon" />
+              <Mail size={17} className="field-icon" />
               <input
-                type="text"
-                name="username"
-                placeholder="alexandre_scents"
-                value={formData.username}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="auth-input-group">
-            <label>Email Address</label>
-            <div className="input-with-icon">
-              <Mail size={18} className="field-icon" />
-              <input
+                id="register-email"
                 type="email"
                 name="email"
-                placeholder="alexandre@example.com"
+                placeholder="name@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
+                autoComplete="email"
               />
             </div>
           </div>
 
           <div className="auth-input-group">
-            <label>Phone Number (Optional)</label>
+            <label htmlFor="register-phone">Phone Number (Optional)</label>
             <div className="input-with-icon">
-              <Phone size={18} className="field-icon" />
+              <Phone size={17} className="field-icon" />
               <input
+                id="register-phone"
                 type="tel"
                 name="phone"
                 placeholder="+91 98765 43210"
                 value={formData.phone}
                 onChange={handleChange}
+                autoComplete="tel"
               />
             </div>
           </div>
 
           <div className="auth-input-group">
-            <label>Create Password</label>
+            <label htmlFor="register-password">Password</label>
             <div className="input-with-icon">
-              <Lock size={18} className="field-icon" />
+              <Lock size={17} className="field-icon" />
               <input
+                id="register-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
-                placeholder="Minimum 8 characters"
+                placeholder="Minimum 6 characters"
                 value={formData.password}
                 onChange={handleChange}
                 required
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -265,18 +257,18 @@ export function SignUpPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
           </div>
 
           <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? 'Creating Sanctuary Account...' : 'Join House LUMORA'}
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
         <p className="auth-footer-link">
-          Already a member? <Link to="/login">Sign In</Link>
+          Already have an account? <Link to="/login">Sign In</Link>
         </p>
       </div>
     </div>

@@ -7,14 +7,12 @@ import {
   Settings, 
   LogOut, 
   Calendar, 
-  CreditCard, 
-  MapPin, 
   ShoppingBag, 
   Trash2, 
   Edit3,
-  CheckCircle,
   Clock,
-  Sparkles
+  ShieldCheck,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -28,28 +26,27 @@ export default function ProfilePage() {
   const { addToCart } = useCart();
   const { addToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'wishlist' | 'details'
   const [isEditing, setIsEditing] = useState(false);
 
-  // Edit form state
   const [editForm, setEditForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
-    bio: user?.bio || '',
-    avatar: user?.avatar || ''
   });
 
   if (!isLoggedIn || !user) {
     return (
-      <div className="profile-guest-view">
-        <div className="guest-card">
-          <User size={48} className="guest-icon" />
-          <h2>Client Sanctuary</h2>
-          <p>Please sign in to view your order history, saved flacons, and profile privileges.</p>
+      <div className="profile-guest-container">
+        <div className="profile-guest-card">
+          <div className="guest-icon-box">
+            <User size={36} strokeWidth={1.5} />
+          </div>
+          <h2>Sign In to Your Account</h2>
+          <p>Please sign in to view your orders, saved fragrances, and account settings.</p>
           <div className="guest-actions">
-            <Link to="/login" className="btn-guest-login">Sign In</Link>
-            <Link to="/signup" className="btn-guest-signup">Create Account</Link>
+            <Link to="/login" className="btn-primary">Sign In</Link>
+            <Link to="/signup" className="btn-secondary">Create Account</Link>
           </div>
         </div>
       </div>
@@ -72,141 +69,123 @@ export default function ProfilePage() {
     navigate('/');
   };
 
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+
   return (
-    <div className="profile-page">
-      {/* Profile Header Banner */}
-      <div className="profile-hero-card">
-        <div className="profile-avatar-wrap">
-          <img src={user.avatar} alt={user.name} className="profile-large-avatar" />
-          <button 
-            type="button" 
-            className="btn-change-avatar"
-            onClick={() => setIsEditing(true)}
-            title="Update Profile"
-          >
-            <Edit3 size={14} />
-          </button>
-        </div>
-
-        <div className="profile-meta-info">
-          <div className="profile-name-tier">
-            <h1 className="profile-display-name">{user.name}</h1>
-            <span className="tier-badge-gold">
-              <Sparkles size={14} /> {user.tier || 'Connoisseur Gold'}
-            </span>
-          </div>
-
-          <p className="profile-username">@{user.username}</p>
-          <p className="profile-bio-text">{user.bio || 'Connoisseur of fine olfactory compositions.'}</p>
-
-          <div className="profile-quick-stats">
-            <div className="stat-pill">
-              <Package size={14} /> {orders.length} Orders
-            </div>
-            <div className="stat-pill">
-              <Heart size={14} /> {wishlist.length} Wishlisted
-            </div>
-            <div className="stat-pill">
-              <Calendar size={14} /> Member since {user.memberSince || '2024'}
-            </div>
+    <div className="profile-page-container">
+      {/* Account Overview Header */}
+      <div className="profile-account-header">
+        <div className="account-avatar-col">
+          <div className="avatar-circle">
+            {user.name ? user.name[0].toUpperCase() : 'U'}
           </div>
         </div>
 
-        <div className="profile-header-actions">
-          <button 
-            type="button" 
-            className="btn-edit-profile-top"
-            onClick={() => setIsEditing(true)}
-          >
-            <Edit3 size={16} /> Edit Profile
-          </button>
-          <button 
-            type="button" 
-            className="btn-logout-top"
-            onClick={handleLogout}
-          >
+        <div className="account-info-col">
+          <div className="name-role-row">
+            <h1 className="account-name">{user.name}</h1>
+            {isAdmin && (
+              <span className="role-tag admin">Administrator</span>
+            )}
+          </div>
+          <p className="account-email">{user.email}</p>
+          <div className="account-meta-stats">
+            <span>Member since {user.memberSince || '2026'}</span>
+            <span>•</span>
+            <span>{orders.length} {orders.length === 1 ? 'Order' : 'Orders'}</span>
+            <span>•</span>
+            <span>{wishlist.length} Wishlisted</span>
+          </div>
+        </div>
+
+        <div className="account-actions-col">
+          {isAdmin && (
+            <Link to="/admin" className="btn-admin-portal">
+              <ShieldCheck size={16} /> Admin Dashboard
+            </Link>
+          )}
+          <button type="button" onClick={handleLogout} className="btn-signout">
             <LogOut size={16} /> Sign Out
           </button>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="profile-tabs-bar">
+      <div className="profile-tabs-strip">
         <button
           type="button"
-          className={`profile-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
           onClick={() => setActiveTab('orders')}
         >
-          <Package size={18} />
-          <span>Flacon Order History ({orders.length})</span>
+          <Package size={16} /> Orders ({orders.length})
         </button>
 
         <button
           type="button"
-          className={`profile-tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`}
           onClick={() => setActiveTab('wishlist')}
         >
-          <Heart size={18} />
-          <span>Saved Wishlist ({wishlist.length})</span>
+          <Heart size={16} /> Wishlist ({wishlist.length})
         </button>
 
         <button
           type="button"
-          className={`profile-tab-btn ${activeTab === 'details' ? 'active' : ''}`}
+          className={`tab-btn ${activeTab === 'details' ? 'active' : ''}`}
           onClick={() => setActiveTab('details')}
         >
-          <User size={18} />
-          <span>Account & Privileges</span>
+          <Settings size={16} /> Account Details
         </button>
       </div>
 
-      {/* Tab Content */}
-      <div className="profile-tab-content">
+      {/* Tab Panels */}
+      <div className="profile-content-panel">
         {/* Tab 1: Orders */}
         {activeTab === 'orders' && (
-          <div className="orders-tab-view">
+          <div className="orders-panel">
             {orders.length === 0 ? (
-              <div className="orders-empty-state">
-                <Package size={40} />
-                <h3>No Orders Placed Yet</h3>
-                <p>Your journey into haute parfumerie awaits.</p>
-                <Link to="/products" className="btn-explore-now">Discover Fragrances</Link>
+              <div className="empty-panel-card">
+                <Package size={36} strokeWidth={1.5} className="empty-icon" />
+                <h3>No Orders Yet</h3>
+                <p>When you purchase fragrances, your order history and tracking will appear here.</p>
+                <Link to="/products" className="btn-primary">Browse Fragrances</Link>
               </div>
             ) : (
-              <div className="orders-list">
+              <div className="orders-stack">
                 {orders.map((order) => (
                   <div key={order.id} className="order-history-card">
                     <div className="order-card-header">
                       <div className="order-id-date">
-                        <span className="order-id-label">{order.id}</span>
-                        <span className="order-date-label">• {order.date}</span>
+                        <span className="order-ref">Order #{order.id}</span>
+                        <span className="order-date">{order.date}</span>
                       </div>
-                      <div className="order-status-badge">
-                        <Clock size={14} />
-                        <span>{order.status}</span>
+                      <div className="order-status-pill">
+                        <Clock size={13} />
+                        <span>{order.status || 'Confirmed'}</span>
                       </div>
                     </div>
 
-                    <div className="order-items-grid">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="order-item-chip">
-                          <img src={item.image} alt={item.name} />
-                          <div>
+                    <div className="order-card-items">
+                      {order.items?.map((item, idx) => (
+                        <div key={idx} className="order-item-line">
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            onError={(e) => { e.currentTarget.src = '/1.jpg'; }}
+                          />
+                          <div className="order-item-desc">
                             <strong>{item.name}</strong>
-                            <span>{item.volume} × {item.quantity}</span>
+                            <span>{item.volume || '100 ML'} · Qty: {item.quantity}</span>
                           </div>
-                          <span className="item-price-chip">₹{item.price * item.quantity}</span>
+                          <span className="order-item-price">₹{((item.price || 0) * item.quantity).toLocaleString()}</span>
                         </div>
                       ))}
                     </div>
 
                     <div className="order-card-footer">
-                      <div className="order-payment-meta">
-                        <span>Payment: {order.paymentMethod}</span>
-                      </div>
-                      <div className="order-total-amount">
-                        <span>Total Paid:</span>
-                        <strong>₹{order.total}</strong>
+                      <div className="payment-note">Payment: {order.paymentMethod || 'Razorpay / Card / UPI'}</div>
+                      <div className="total-note">
+                        <span>Total:</span>
+                        <strong>₹{(order.total || 0).toLocaleString()}</strong>
                       </div>
                     </div>
                   </div>
@@ -218,39 +197,43 @@ export default function ProfilePage() {
 
         {/* Tab 2: Wishlist */}
         {activeTab === 'wishlist' && (
-          <div className="wishlist-tab-view">
+          <div className="wishlist-panel">
             {wishlist.length === 0 ? (
-              <div className="wishlist-empty-state">
-                <Heart size={40} />
+              <div className="empty-panel-card">
+                <Heart size={36} strokeWidth={1.5} className="empty-icon" />
                 <h3>Your Wishlist is Empty</h3>
-                <p>Tap the heart icon on any flacon in our catalog to save it here for later.</p>
-                <Link to="/products" className="btn-explore-now">Explore Fragrance Catalog</Link>
+                <p>Save fragrances you are interested in by clicking the heart icon on any product.</p>
+                <Link to="/products" className="btn-primary">Explore Fragrances</Link>
               </div>
             ) : (
-              <div className="wishlist-grid">
+              <div className="wishlist-items-grid">
                 {wishlist.map((item) => (
-                  <div key={item.id} className="wishlist-item-card">
-                    <img src={item.image} alt={item.name} className="wishlist-thumb" />
-                    <div className="wishlist-item-info">
-                      <span className="wishlist-cat">{item.category}</span>
-                      <h4>{item.name}</h4>
-                      <p className="wishlist-price">₹{item.price}</p>
-
-                      <div className="wishlist-card-actions">
+                  <div key={item.id} className="wishlist-product-card">
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="wishlist-thumb" 
+                      onError={(e) => { e.currentTarget.src = '/1.jpg'; }}
+                    />
+                    <div className="wishlist-meta">
+                      <span className="cat-label">{item.category}</span>
+                      <h4 className="name-label">{item.name}</h4>
+                      <p className="price-label">₹{(item.price || 0).toLocaleString()}</p>
+                      <div className="wishlist-btns-row">
                         <button
                           type="button"
-                          className="btn-wishlist-cart"
+                          className="btn-move-cart"
                           onClick={() => handleMoveToCart(item)}
                         >
-                          <ShoppingBag size={15} /> Move to Cart
+                          <ShoppingBag size={14} /> Move to Bag
                         </button>
                         <button
                           type="button"
-                          className="btn-wishlist-remove"
+                          className="btn-remove-wishlist"
                           onClick={() => toggleWishlist(item)}
                           title="Remove from wishlist"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -263,109 +246,79 @@ export default function ProfilePage() {
 
         {/* Tab 3: Account Details */}
         {activeTab === 'details' && (
-          <div className="details-tab-view">
-            <div className="account-details-card">
-              <h3>Personal Sanctuary Details</h3>
-              <div className="details-grid-preview">
-                <div className="detail-field">
-                  <label>Full Name</label>
-                  <p>{user.name}</p>
-                </div>
-                <div className="detail-field">
-                  <label>Email Address</label>
-                  <p>{user.email}</p>
-                </div>
-                <div className="detail-field">
-                  <label>Contact Phone</label>
-                  <p>{user.phone || '+91 98765 43210'}</p>
-                </div>
-                <div className="detail-field">
-                  <label>Membership Status</label>
-                  <p>{user.tier || 'Connoisseur Gold Member'}</p>
-                </div>
-                <div className="detail-field full">
-                  <label>Olfactory Bio</label>
-                  <p>{user.bio || 'Collector of fine niche perfumes & rare oriental ouds.'}</p>
-                </div>
+          <div className="account-details-panel">
+            <div className="details-card">
+              <div className="details-header-row">
+                <h3>Personal Information</h3>
+                {!isEditing && (
+                  <button type="button" onClick={() => setIsEditing(true)} className="btn-edit-details">
+                    <Edit3 size={15} /> Edit
+                  </button>
+                )}
               </div>
 
-              <button 
-                type="button" 
-                className="btn-trigger-edit"
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit3 size={16} /> Edit Account Information
-              </button>
+              {!isEditing ? (
+                <div className="details-display-grid">
+                  <div className="field-block">
+                    <span className="field-label">Full Name</span>
+                    <span className="field-value">{user.name}</span>
+                  </div>
+                  <div className="field-block">
+                    <span className="field-label">Email Address</span>
+                    <span className="field-value">{user.email}</span>
+                  </div>
+                  <div className="field-block">
+                    <span className="field-label">Phone Number</span>
+                    <span className="field-value">{user.phone || 'Not provided'}</span>
+                  </div>
+                  <div className="field-block">
+                    <span className="field-label">Role</span>
+                    <span className="field-value">{user.role}</span>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleEditSubmit} className="details-edit-form">
+                  <div className="input-group">
+                    <label>Full Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Email Address</label>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Phone Number</label>
+                    <input
+                      type="tel"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+                  <div className="form-actions-row">
+                    <button type="button" onClick={() => setIsEditing(false)} className="btn-cancel">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-save">
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         )}
       </div>
-
-      {/* Edit Profile Modal */}
-      {isEditing && (
-        <div className="modal-overlay" onClick={() => setIsEditing(false)}>
-          <div className="edit-modal-card" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit Client Profile</h3>
-            <form onSubmit={handleEditSubmit} className="edit-form">
-              <div className="input-group">
-                <label>Display Name</label>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label>Phone</label>
-                <input
-                  type="tel"
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label>Avatar Photo URL</label>
-                <input
-                  type="url"
-                  value={editForm.avatar}
-                  onChange={(e) => setEditForm({ ...editForm, avatar: e.target.value })}
-                />
-              </div>
-
-              <div className="input-group">
-                <label>Fragrance Preferences Bio</label>
-                <textarea
-                  rows="3"
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-buttons-row">
-                <button type="button" className="btn-cancel" onClick={() => setIsEditing(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-save-profile">
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

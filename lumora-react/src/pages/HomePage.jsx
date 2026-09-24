@@ -22,12 +22,12 @@ import FilterModal from '../components/FilterModal';
 import QuickViewModal from '../components/QuickViewModal';
 import ImageLightboxModal from '../components/ImageLightboxModal';
 
-// Signature hero slides from original website requested by user
+// Verified high-resolution luxury hero slides
 const heroSlides = [
+  '/atelier-craftsmanship.jpg',
+  '/footer-full-bg.jpg',
   '/s1UY-unsplash.jpg',
-  '/s2plash.jpg',
-  '/s3-unsplash.jpg',
-  '/s4splash.jpg'
+  '/s5A-unsplash.jpg'
 ];
 
 export default function HomePage() {
@@ -113,9 +113,12 @@ export default function HomePage() {
               src={slide}
               className={`slider-img ${index === currentSlideIndex ? 'active' : ''}`}
               alt={`LUMORA Scent Slide ${index + 1}`}
-              loading={index === 0 ? "eager" : "lazy"}
-              fetchPriority={index === 0 ? "high" : "auto"}
+              loading="eager"
               decoding="async"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/atelier-craftsmanship.jpg';
+              }}
             />
           ))}
           <div className="slider-bottom-vignette"></div>

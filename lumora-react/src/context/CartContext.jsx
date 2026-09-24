@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { promoCodes } from '../data/products';
 import { useToast } from './ToastContext';
+import { ordersApi } from '../api/orders';
 
 const CartContext = createContext();
 
@@ -13,16 +14,31 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
     try {
       const saved = localStorage.getItem('lumora_cart');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((p) => {
+          const vol = p.volume || p.selectedVolume || '100 ML';
+          return {
+            ...p,
+            volume: vol,
+            selectedVolume: vol,
+            quantity: p.quantity || 1
+          };
+        });
+      }
       // Fallback check legacy cart
       const legacy = localStorage.getItem('cart');
       if (legacy) {
         const parsed = JSON.parse(legacy);
-        return parsed.map(p => ({
-          ...p,
-          volume: p.volume || '100 ML',
-          quantity: p.quantity || 1
-        }));
+        return parsed.map((p) => {
+          const vol = p.volume || p.selectedVolume || '100 ML';
+          return {
+            ...p,
+            volume: vol,
+            selectedVolume: vol,
+            quantity: p.quantity || 1
+          };
+        });
       }
     } catch (e) {
       console.error("Failed to load cart", e);
@@ -50,10 +66,13 @@ export function CartProvider({ children }) {
   };
 
   const addToCart = (product, quantity = 1, volume = '100 ML') => {
-    const unitPrice = calculateVolumePrice(product.price, volume);
+    const vol = volume || '100 ML';
+    const unitPrice = calculateVolumePrice(product.price, vol);
     
     setItems(prev => {
-      const existingIndex = prev.findIndex(item => item.id === product.id && item.volume === volume);
+      const existingIndex = prev.findIndex(
+        item => item.id === product.id && ((item.volume || item.selectedVolume || '100 ML') === vol)
+      );
       if (existingIndex > -1) {
         const updated = [...prev];
         updated[existingIndex].quantity += quantity;
@@ -69,35 +88,46 @@ export function CartProvider({ children }) {
             category: product.category,
             basePrice: product.price,
             price: unitPrice,
-            volume,
+            volume: vol,
+            selectedVolume: vol,
             quantity
           }
         ];
       }
     });
 
-    addToast(`Added ${quantity} × ${product.name} (${volume}) to cart!`, 'success');
+    addToast(`Added ${quantity} × ${product.name} (${vol}) to bag`, 'success');
   };
 
   const updateQuantity = (id, volume, newQty) => {
+    const vol = volume || null;
     if (newQty <= 0) {
-      removeFromCart(id, volume);
+      removeFromCart(id, vol);
       return;
     }
     setItems(prev =>
-      prev.map(item =>
-        item.id === id && item.volume === volume ? { ...item, quantity: newQty } : item
-      )
+      prev.map(item => {
+        const itemVol = item.volume || item.selectedVolume || '100 ML';
+        const isMatch = item.id === id && (!vol || itemVol === vol);
+        return isMatch ? { ...item, quantity: newQty } : item;
+      })
     );
   };
 
   const removeFromCart = (id, volume) => {
+    const vol = volume || null;
     setItems(prev => {
-      const target = prev.find(item => item.id === id && item.volume === volume);
+      const isMatch = (item) => {
+        if (item.id !== id) return false;
+        if (!vol) return true;
+        const itemVol = item.volume || item.selectedVolume || '100 ML';
+        return itemVol === vol;
+      };
+      const target = prev.find(isMatch);
       if (target) {
-        addToast(`Removed ${target.name} from cart`, 'info');
+        addToast(`Removed ${target.name} from bag`, 'info');
       }
-      return prev.filter(item => !(item.id === id && item.volume === volume));
+      return prev.filter(item => !isMatch(item));
     });
   };
 
@@ -106,18 +136,34 @@ export function CartProvider({ children }) {
     setAppliedPromo(null);
   };
 
-  const applyPromo = (code) => {
+  const applyPromo = async (code) => {
     const trimmed = code.trim().toUpperCase();
-    if (promoCodes[trimmed]) {
-      setAppliedPromo({
-        code: trimmed,
-        ...promoCodes[trimmed]
-      });
-      addToast(`Promo code "${trimmed}" applied: ${promoCodes[trimmed].description}!`, 'success');
-      return { success: true };
-    } else {
-      addToast(`Invalid promo code. Try LUMORA10 or FIRSTLUX`, 'warning');
-      return { success: false, message: 'Invalid coupon code' };
+    try {
+      const res = await ordersApi.validateCoupon(trimmed, subtotal);
+      if (res?.data?.coupon) {
+        const c = res.data.coupon;
+        setAppliedPromo({
+          code: c.code,
+          discountAmount: c.discount,
+          discountPercent: c.discount ? Math.round((c.discount / (subtotal || 1)) * 100) : 10,
+          description: c.description || `${c.code} applied`,
+        });
+        addToast(`Promo code "${trimmed}" applied: ${c.description || 'Discount applied'}!`, 'success');
+        return { success: true };
+      }
+    } catch {
+      // Local fallback
+      if (promoCodes[trimmed]) {
+        setAppliedPromo({
+          code: trimmed,
+          ...promoCodes[trimmed],
+        });
+        addToast(`Promo code "${trimmed}" applied: ${promoCodes[trimmed].description}!`, 'success');
+        return { success: true };
+      } else {
+        addToast(`Invalid promo code. Try LUMORA10 or FIRSTLUX`, 'warning');
+        return { success: false, message: 'Invalid coupon code' };
+      }
     }
   };
 
@@ -131,7 +177,9 @@ export function CartProvider({ children }) {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   
   const discount = appliedPromo 
-    ? Math.round((subtotal * appliedPromo.discountPercent) / 100) 
+    ? (appliedPromo.discountAmount !== undefined 
+        ? appliedPromo.discountAmount 
+        : Math.round((subtotal * appliedPromo.discountPercent) / 100))
     : 0;
 
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD || items.length === 0;

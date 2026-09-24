@@ -1,14 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sparkles, SlidersHorizontal, X, Compass, Filter } from 'lucide-react';
-import { products } from '../data/products';
+import { products as localProducts } from '../data/products';
+import { productsApi } from '../api/products';
 import ProductCard from '../components/ProductCard';
 import CategoryBar from '../components/CategoryBar';
 import FilterModal from '../components/FilterModal';
 import QuickViewModal from '../components/QuickViewModal';
 import ImageLightboxModal from '../components/ImageLightboxModal';
 
+import { applyDailyPricingToCollection } from '../utils/dailyPricing';
+
 export default function CatalogPage() {
+  const [productList, setProductList] = useState(localProducts);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'All';
   const initialSearch = searchParams.get('search') || '';
@@ -16,6 +20,39 @@ export default function CatalogPage() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  useEffect(() => {
+    productsApi
+      .getProducts({ limit: 100 })
+      .then((res) => {
+        if (res?.data?.items?.length) {
+          const mapped = res.data.items.map((p) => ({
+            id: p.id,
+            name: p.name,
+            subtitle: p.shortDescription || p.name,
+            price: p.basePrice,
+            originalPrice: p.salePrice || Math.round(p.basePrice * 1.2),
+            image: p.images[0]?.url || '/1.jpg',
+            description: p.description,
+            category: p.category?.name || p.fragranceFamily || 'Haute Parfumerie',
+            topNotes: p.fragranceNotes?.filter(n => n.fragranceNote?.type === 'TOP').map(n => n.fragranceNote.name).join(', ') || '',
+            heartNotes: p.fragranceNotes?.filter(n => n.fragranceNote?.type === 'MIDDLE').map(n => n.fragranceNote.name).join(', ') || '',
+            baseNotes: p.fragranceNotes?.filter(n => n.fragranceNote?.type === 'BASE').map(n => n.fragranceNote.name).join(', ') || '',
+            longevity: '10 - 12 Hours',
+            sillage: 'Refined & Polished',
+            volume: '100 ML',
+            rating: p.ratingAverage,
+            reviewsCount: p.reviewCount,
+            isNew: p.isNewArrival,
+            isBestseller: p.isBestSeller,
+          }));
+          setProductList(applyDailyPricingToCollection(mapped));
+        }
+      })
+      .catch((err) => {
+        console.warn('Using local products data', err);
+      });
+  }, []);
 
   // Advanced Filters State
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -87,7 +124,7 @@ export default function CatalogPage() {
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    return productList.filter((product) => {
       // Category filter
       const matchesCategory =
         advancedFilters.category === 'All' ||

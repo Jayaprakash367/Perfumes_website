@@ -74,8 +74,8 @@ export default function Footer() {
               <ShieldCheck size={26} strokeWidth={1.4} className="dark-pillar-icon" />
             </div>
             <div className="dark-pillar-info">
-              <h4 className="dark-pillar-title">100% Authentic Fragrances</h4>
-              <p className="dark-pillar-sub">Sourced directly from global brands</p>
+              <h4 className="dark-pillar-title">Direct Maison Sourcing</h4>
+              <p className="dark-pillar-sub">Authentic formulations from master perfumers</p>
             </div>
           </div>
 

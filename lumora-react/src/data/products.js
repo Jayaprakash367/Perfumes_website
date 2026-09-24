@@ -1,5 +1,7 @@
-/* LUMORA Luxury Fragrance Collection Data */
-export const products = [
+import { applyDailyPricingToCollection } from '../utils/dailyPricing';
+
+/* LUMORA Luxury Fragrance Collection Raw Catalog */
+const rawProducts = [
   {
     id: 1,
     name: "Ocean Breeze",
@@ -1367,6 +1369,9 @@ export const products = [
     isBestseller: true
   }
 ];
+
+/* 24-Hour Dynamically Priced Fragrance Collection (Refreshes Every 24h at Midnight) */
+export const products = applyDailyPricingToCollection(rawProducts);
 
 export const categories = [
   "All",

@@ -81,10 +81,10 @@ export default function QuickViewModal({ product, isOpen, onClose, onOpenLightbo
 
             <div className="modal-guarantees">
               <div className="guarantee-item">
-                <ShieldCheck size={16} /> 100% Authentic Luxury Guarantee
+                <ShieldCheck size={16} /> Direct Maison Bottling
               </div>
               <div className="guarantee-item">
-                <CheckCircle size={16} /> Cruelty-Free & Natural Botanicals
+                <CheckCircle size={16} /> Botanical Raw Essences
               </div>
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function QuickViewModal({ product, isOpen, onClose, onOpenLightbo
                 className="btn-full-details"
                 onClick={onClose}
               >
-                Full Inspection &rarr;
+                View Full Details &rarr;
               </Link>
             </div>
           </div>

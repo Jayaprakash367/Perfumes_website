@@ -11,7 +11,8 @@ import {
   Sparkles,
   Globe,
   SlidersHorizontal,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -120,6 +121,28 @@ export default function Navbar() {
               <Search size={18} />
             </button>
 
+            {isLoggedIn && (user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+              <Link
+                to="/admin"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  color: '#fef08a',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  textDecoration: 'none'
+                }}
+                title="Atelier Admin & User Login Activity Dashboard"
+              >
+                <ShieldCheck size={14} color="#d4af37" /> Admin Portal
+              </Link>
+            )}
+
             <Link to="/products" className="airbnb-curator-link">
               Explore 65 Scents
             </Link>
@@ -161,6 +184,14 @@ export default function Navbar() {
                         <strong className="user-name-label">{user.name}</strong>
                       </div>
                       <hr className="airbnb-dropdown-hr" />
+                      {(user.role === 'ADMIN' || user.role === 'MANAGER') && (
+                        <>
+                          <Link to="/admin" className="dropdown-action-link bold" style={{ color: '#d4af37' }}>
+                            <ShieldCheck size={16} color="#d4af37" /> Admin & Login Activity
+                          </Link>
+                          <hr className="airbnb-dropdown-hr" />
+                        </>
+                      )}
                       <Link to="/profile" className="dropdown-action-link bold">
                         <User size={16} /> My Account
                       </Link>

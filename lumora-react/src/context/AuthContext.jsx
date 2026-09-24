@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from './ToastContext';
+import { authApi } from '../api/auth';
+import { ordersApi } from '../api/orders';
 
 const AuthContext = createContext();
 
@@ -8,126 +10,178 @@ export function AuthProvider({ children }) {
 
   const [user, setUser] = useState(() => {
     try {
-      const sessionProfile = sessionStorage.getItem('userProfile');
-      if (sessionProfile) return JSON.parse(sessionProfile);
-
-      const localProfile = localStorage.getItem('lumora_savedUser');
-      if (localProfile) return JSON.parse(localProfile);
-
-      const sessionName = sessionStorage.getItem('userName');
-      if (sessionName) {
-        return {
-          username: sessionName,
-          name: sessionName,
-          email: `${sessionName.toLowerCase()}@lumora.com`,
-          tier: 'Connoisseur Gold',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-          memberSince: '2024'
-        };
-      }
+      const savedUser = localStorage.getItem('lumora_savedUser');
+      if (savedUser) return JSON.parse(savedUser);
     } catch (e) {
-      console.error("Failed to load user session", e);
+      console.error('Failed to load user from localStorage', e);
     }
     return null;
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    try {
-      return sessionStorage.getItem('isLoggedIn') === 'true';
-    } catch (e) {
-      return false;
-    }
+    return Boolean(localStorage.getItem('lumora_token'));
   });
 
-  const [orders, setOrders] = useState(() => {
-    try {
-      const savedOrders = localStorage.getItem('lumora_orders');
-      if (savedOrders) return JSON.parse(savedOrders);
-    } catch (e) {
-      console.error("Failed to load orders", e);
-    }
-    return [
-      {
-        id: 'LUM-84920',
-        date: '14 Sep 2026',
-        items: [
-          { name: 'Ocean Breeze', volume: '100 ML', quantity: 1, price: 1299, image: '/karly-jones-4i9ef6xU738-unsplash.jpg' },
-          { name: 'Romantic Rose', volume: '100 ML', quantity: 1, price: 1499, image: '/birgith-roosipuu-nka_sIQpKEU-unsplash.jpg' }
-        ],
-        total: 2798,
-        status: 'Delivered',
-        paymentMethod: 'Credit Card (ending in 4242)'
-      }
-    ];
-  });
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
+  // Restore authenticated session from backend on mount
   useEffect(() => {
-    try {
-      localStorage.setItem('lumora_orders', JSON.stringify(orders));
-    } catch (e) {
-      console.error("Failed to save orders", e);
+    const token = localStorage.getItem('lumora_token');
+    if (token) {
+      authApi
+        .me()
+        .then((res) => {
+          if (res?.data?.user) {
+            const apiUser = res.data.user;
+            const fullProfile = {
+              id: apiUser.userId || apiUser.id,
+              username: apiUser.name || 'Connoisseur',
+              name: apiUser.name || 'Connoisseur',
+              email: apiUser.email,
+              role: apiUser.role,
+              phone: apiUser.phone || '+91 9876543210',
+              tier: apiUser.role === 'ADMIN' ? 'Atelier Administrator' : 'Connoisseur Gold',
+              avatar: apiUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+              memberSince: '2026',
+            };
+            setUser(fullProfile);
+            setIsLoggedIn(true);
+            localStorage.setItem('lumora_savedUser', JSON.stringify(fullProfile));
+          }
+        })
+        .catch(() => {
+          // Token expired or invalid
+          localStorage.removeItem('lumora_token');
+          setIsLoggedIn(false);
+        });
     }
-  }, [orders]);
+  }, []);
 
-  const login = (username, password) => {
-    const defaultProfile = {
-      username: username || 'FragranceLover',
-      name: username || 'Alexandre Dubois',
-      email: `${(username || 'alexandre').toLowerCase()}@lumora.com`,
-      phone: '+1 (555) 234-5678',
-      tier: 'Connoisseur Gold',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-      bio: 'Collector of artisanal niche perfumes & rare oriental ouds.',
-      memberSince: 'March 2024'
-    };
+  // Fetch orders from backend whenever logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      setLoadingOrders(true);
+      ordersApi
+        .getOrders()
+        .then((res) => {
+          if (res?.data?.orders) {
+            setOrders(
+              res.data.orders.map((o) => ({
+                id: o.orderNumber,
+                orderId: o.id,
+                date: new Date(o.createdAt).toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                }),
+                items: o.items.map((item) => ({
+                  name: item.productName,
+                  volume: item.variantSize,
+                  quantity: item.quantity,
+                  price: item.unitPrice,
+                  image: item.imageUrl,
+                })),
+                total: o.totalAmount,
+                status: o.orderStatus,
+                paymentStatus: o.paymentStatus,
+                paymentMethod: 'Razorpay / UPI / Card',
+              }))
+            );
+          }
+        })
+        .catch(() => {
+          // Fallback to local orders
+          try {
+            const savedOrders = localStorage.getItem('lumora_orders');
+            if (savedOrders) setOrders(JSON.parse(savedOrders));
+          } catch {}
+        })
+        .finally(() => setLoadingOrders(false));
+    }
+  }, [isLoggedIn]);
 
-    setUser(defaultProfile);
-    setIsLoggedIn(true);
+  const login = async (usernameOrEmail, password) => {
+    const isEmail = usernameOrEmail.includes('@');
+    const emailToUse = isEmail ? usernameOrEmail.trim() : `${usernameOrEmail.toLowerCase().trim()}@lumora.com`;
 
     try {
-      sessionStorage.setItem('isLoggedIn', 'true');
-      sessionStorage.setItem('userName', defaultProfile.username);
-      sessionStorage.setItem('userProfile', JSON.stringify(defaultProfile));
-      localStorage.setItem('lumora_savedUser', JSON.stringify(defaultProfile));
-    } catch (e) {
-      console.error(e);
-    }
+      const res = await authApi.login({
+        email: emailToUse,
+        password: password,
+      });
 
-    addToast(`Welcome back, ${defaultProfile.name}!`, 'success');
+      if (res?.data?.token) {
+        localStorage.setItem('lumora_token', res.data.token);
+        const u = res.data.user;
+        const profile = {
+          id: u.id,
+          username: u.name,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          phone: u.phone || '',
+          tier: u.role === 'ADMIN' ? 'Atelier Administrator' : u.role === 'MANAGER' ? 'Atelier Manager' : 'Connoisseur Gold',
+          avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+          memberSince: new Date(u.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        };
+        setUser(profile);
+        setIsLoggedIn(true);
+        localStorage.setItem('lumora_savedUser', JSON.stringify(profile));
+        sessionStorage.setItem('isLoggedIn', 'true');
+        addToast(`Welcome back to LUMORA, ${profile.name}!`, 'success');
+        return profile;
+      }
+      throw new Error(res?.message || 'Authentication failed');
+    } catch (err) {
+      const errMsg = err.message || 'Invalid email or password.';
+      addToast(errMsg, 'error');
+      throw err;
+    }
   };
 
-  const signup = (formData) => {
-    const newProfile = {
-      username: formData.username || formData.email.split('@')[0],
-      name: formData.name || formData.username || 'Fragrance Enthusiast',
-      email: formData.email,
-      phone: formData.phone || '+1 (555) 987-6543',
-      tier: 'Lumora Member',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-      bio: 'New explorer of luxury fragrances.',
-      memberSince: 'September 2026'
-    };
-
-    setUser(newProfile);
-    setIsLoggedIn(true);
-
+  const signup = async (formData) => {
     try {
-      sessionStorage.setItem('isLoggedIn', 'true');
-      sessionStorage.setItem('userName', newProfile.username);
-      sessionStorage.setItem('userProfile', JSON.stringify(newProfile));
-      localStorage.setItem('lumora_savedUser', JSON.stringify(newProfile));
-    } catch (e) {
-      console.error(e);
-    }
+      const res = await authApi.register({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        phone: formData.phone?.trim() || undefined,
+      });
 
-    addToast(`Welcome to House LUMORA, ${newProfile.name}!`, 'success');
+      if (res?.data?.token) {
+        localStorage.setItem('lumora_token', res.data.token);
+        const u = res.data.user;
+        const profile = {
+          id: u.id,
+          username: u.name,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          phone: u.phone || '',
+          tier: 'Lumora Member',
+          avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+          memberSince: new Date(u.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        };
+        setUser(profile);
+        setIsLoggedIn(true);
+        localStorage.setItem('lumora_savedUser', JSON.stringify(profile));
+        sessionStorage.setItem('isLoggedIn', 'true');
+        addToast(`Account created! Welcome to House LUMORA, ${profile.name}!`, 'success');
+        return profile;
+      }
+      throw new Error(res?.message || 'Registration failed');
+    } catch (err) {
+      const errMsg = err.message || 'Registration failed. Please check your details.';
+      addToast(errMsg, 'error');
+      throw err;
+    }
   };
 
   const updateProfile = (updatedFields) => {
-    setUser(prev => {
+    setUser((prev) => {
       const merged = { ...prev, ...updatedFields };
       try {
-        sessionStorage.setItem('userProfile', JSON.stringify(merged));
         localStorage.setItem('lumora_savedUser', JSON.stringify(merged));
       } catch (e) {
         console.error(e);
@@ -138,17 +192,13 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    authApi.logout().catch(() => {});
+    localStorage.removeItem('lumora_token');
+    localStorage.removeItem('lumora_savedUser');
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('userProfile');
     setUser(null);
     setIsLoggedIn(false);
-
-    try {
-      sessionStorage.removeItem('isLoggedIn');
-      sessionStorage.removeItem('userProfile');
-      sessionStorage.removeItem('userName');
-    } catch (e) {
-      console.error(e);
-    }
-
     addToast('You have been signed out.', 'info');
   };
 
@@ -157,10 +207,9 @@ export function AuthProvider({ children }) {
       id: `LUM-${Math.floor(10000 + Math.random() * 90000)}`,
       date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       status: 'Processing',
-      ...orderData
+      ...orderData,
     };
-
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders((prev) => [newOrder, ...prev]);
     return newOrder;
   };
 
@@ -174,7 +223,8 @@ export function AuthProvider({ children }) {
         updateProfile,
         logout,
         orders,
-        addOrder
+        loadingOrders,
+        addOrder,
       }}
     >
       {children}
